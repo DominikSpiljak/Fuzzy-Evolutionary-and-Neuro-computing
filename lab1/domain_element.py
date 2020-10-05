@@ -5,9 +5,13 @@ class DomainElement:
     def getNumberOfComponents(self):
         return len(self.values)
 
-    def getComponentValue(index):
+    def getComponentValue(self, index):
         return self.values(index)
-    
+
+    @staticmethod
+    def of(element):
+        return DomainElement(list(element))
+
     def __eq__(self, other):
         return self.values == other.values
 
