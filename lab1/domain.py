@@ -1,6 +1,5 @@
 from domain_interface import DomainInterface
 from domain_element import DomainElement
-from debug import Debug
 import itertools
 
 
@@ -81,18 +80,3 @@ class CompositeDomain(Domain):
 
     def getNumberOfComponents(self):
         return sum([component.getNumberOfComponents() for component in self.components])
-
-
-if __name__ == "__main__":
-    d1 = Domain.intRange(0, 5)
-    Debug.debug_print(d1, 'Elementi domene d1')
-    d2 = Domain.intRange(0, 3)
-    Debug.debug_print(d2, 'Elementi domene d2')
-    d3 = Domain.combine(d1, d2)
-    Debug.debug_print(d3, 'Elementi domene d3')
-    d4 = Domain.combine(d3, d1)
-    Debug.debug_print(d4, 'Elementi domene d4')
-
-    Debug.debug_print(d4.getComponent(0))
-
-    print()

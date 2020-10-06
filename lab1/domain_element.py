@@ -10,7 +10,7 @@ class DomainElement:
 
     @staticmethod
     def of(element):
-        return DomainElement(list(element))
+        return DomainElement([element])
 
     def __eq__(self, other):
         return self.values == other.values
