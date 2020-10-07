@@ -1,8 +1,9 @@
 from domain import Domain
 from domain_element import DomainElement
-from fuzzyset_mutuable import MutuableFuzzySet
+from fuzzyset_mutable import MutableFuzzySet
 from fuzzyset_calculated import CalculatedFuzzySet
 from fuzzyset_standard import StandardFuzzySets
+from operations import Operations
 
 
 class Debug:
@@ -25,10 +26,19 @@ class Debug:
 
 if __name__ == "__main__":
     d = Domain.intRange(0, 11)
-    set1 = MutuableFuzzySet(d).set(DomainElement.of(0), 1.0).set(DomainElement.of(1), 0.8).set(
+    set1 = MutableFuzzySet(d).set(DomainElement.of(0), 1.0).set(DomainElement.of(1), 0.8).set(
         DomainElement.of(2), 0.6).set(DomainElement.of(3), 0.4).set(DomainElement.of(4), 0.2)
-    Debug.debug_print_fuzzyset(set1, 'Set1')
-    d2 = Domain.intRange(-5, 6)
-    set2 = CalculatedFuzzySet(d2, StandardFuzzySets.lambdaFunction(
-        d2.indexOfElement(DomainElement.of(-4)), d2.indexOfElement(DomainElement.of(0)), d2.indexOfElement(DomainElement.of(4))))
-    Debug.debug_print_fuzzyset(set2, 'Set2')
+
+    Debug.debug_print_fuzzyset(set1, "Set1:")
+    notSet1 = Operations.unaryOperation(set1, Operations.zadehNot())
+    Debug.debug_print_fuzzyset(notSet1, "notSet1")
+
+    union = Operations.binaryOperation(
+        set1, notSet1, Operations.zadehOr())
+    Debug.debug_print_fuzzyset(union, "Set1 union notSet1:")
+
+    hinters = Operations.binaryOperation(
+        set1, notSet1, Operations.hamacherTNorm(1.0))
+
+    Debug.debug_print_fuzzyset(
+        hinters, "Set1 intersection with notSet1 using parameterised Hamacher T norm with parameter 1.0:")
