@@ -21,7 +21,6 @@ class Relations:
 
     @staticmethod
     def isMaxMinTransitive(fuzzyset):
-
         domain_u = fuzzyset.getDomain().getComponent(0)
         for x in domain_u:
             x = x.values[0]
@@ -56,7 +55,7 @@ class Relations:
 
     @staticmethod
     def isFuzzyEquivalence(fuzzyset):
-        pass
+        return Relations.isSymmetric(fuzzyset) and Relations.isReflexive(fuzzyset) and Relations.isMaxMinTransitive(fuzzyset)
 
     @staticmethod
     def isUtimesURelation(fuzzyset):
