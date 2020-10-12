@@ -1,7 +1,8 @@
 from domain_interface import DomainInterface
 from domain_element import DomainElement
 import itertools
-
+from operator import mul
+from functools import reduce
 
 class Domain(DomainInterface):
 
@@ -62,7 +63,7 @@ class CompositeDomain(Domain):
         super(CompositeDomain, self).__init__(domain_elements)
 
     def getCardinality(self):
-        return sum([component.getCardinality() for component in self.components])
+        return reduce(mul, [component.getCardinality() for component in self.components], 1)
 
     def getComponent(self, index):
         found = None

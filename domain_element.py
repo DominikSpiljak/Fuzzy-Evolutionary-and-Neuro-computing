@@ -9,8 +9,10 @@ class DomainElement:
         return self.values(index)
 
     @staticmethod
-    def of(element):
-        return DomainElement([element])
+    def of(*element):
+        if not isinstance(element, list):
+            element = list(element)
+        return DomainElement(element)
 
     def __eq__(self, other):
         return self.values == other.values

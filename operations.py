@@ -22,22 +22,22 @@ class Operations:
                 fuzzySet1.getValueAt(element), fuzzySet2.getValueAt(element)))
         return new_set
 
-    @ staticmethod
+    @staticmethod
     def zadehNot():
         return UnaryFunction(lambda x: round(1.0 - x, 16))
 
-    @ staticmethod
+    @staticmethod
     def zadehAnd():
         return BinaryFunction(lambda x, y: min(x, y))
 
-    @ staticmethod
+    @staticmethod
     def zadehOr():
         return BinaryFunction(lambda x, y: max(x, y))
 
-    @ staticmethod
+    @staticmethod
     def hamacherTNorm(v):
         return BinaryFunction(lambda x, y: round((x * y) / (v + (1 - v) * (x + y - x * y)), 16))
 
-    @ staticmethod
+    @staticmethod
     def hamacherSNorm(v):
         return BinaryFunction(lambda x, y: round((x + y - (2 - v) * x * y) / (1 - (1 - v) * x * y), 16))
