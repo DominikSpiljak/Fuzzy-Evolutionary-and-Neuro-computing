@@ -11,4 +11,4 @@ class CalculatedFuzzySet(FuzzySetInterface):
         return self.domain
 
     def getValueAt(self, element):
-        return self.function.valueAt(self.domain.indexOfElement(element))
+        return self.function.valueAt(element.values[0])

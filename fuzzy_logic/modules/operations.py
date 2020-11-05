@@ -15,10 +15,10 @@ class Operations:
         return new_set
 
     @staticmethod
-    def binaryOperation(fuzzySet1, fuzzySet2, binaryOperation):
+    def binaryOperation(fuzzySet1, fuzzySet2, binaryFunction):
         new_set = MutableFuzzySet(fuzzySet1.getDomain())
         for element in new_set.getDomain():
-            new_set.set(element, binaryOperation.valueAt(
+            new_set.set(element, binaryFunction.valueAt(
                 fuzzySet1.getValueAt(element), fuzzySet2.getValueAt(element)))
         return new_set
 
