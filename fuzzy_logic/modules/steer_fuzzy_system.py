@@ -88,6 +88,11 @@ class SteerFuzzySystem(FuzzySystem):
     def conclude(self, L, D, LK, DK, V, S):
         pass
 
+    def evaluate_rule(self, singletons, rule, and_operator, or_operator):
+        conclusion = self.conclude_rule(
+            singletons, rule, and_operator, or_operator)
+        return conclusion, self.defuzzier(conclusion)
+
 
 class SteerFuzzySystemMin(SteerFuzzySystem):
 
@@ -96,7 +101,7 @@ class SteerFuzzySystemMin(SteerFuzzySystem):
         self.and_operator = min
         self.or_operator = max
 
-    def conclude(self, L, D, LK, DK, V, S):
+    def conclude(self, L, D, LK, DK, V, S, return_conclusion=False):
 
         singletons = list(map(DomainElement.of, [L, D, LK, DK, V, S]))
 
@@ -111,7 +116,10 @@ class SteerFuzzySystemMin(SteerFuzzySystem):
             conclusion = Operations.binaryOperation(
                 conclusion, y_cutoff, Operations.zadehOr())
 
-        return int(self.defuzzier.decode(conclusion))
+        if return_conclusion:
+            return conclusion, int(self.defuzzier.decode(conclusion))
+        else:
+            return int(self.defuzzier.decode(conclusion))
 
 
 class SteerFuzzySystemProduct(SteerFuzzySystem):
@@ -121,7 +129,7 @@ class SteerFuzzySystemProduct(SteerFuzzySystem):
         self.and_operator = min
         self.or_operator = lambda l: reduce(lambda x, y: x * y, l)
 
-    def conclude(self, L, D, LK, DK, V, S):
+    def conclude(self, L, D, LK, DK, V, S, return_conclusion=False):
 
         singletons = list(map(DomainElement.of, [L, D, LK, DK, V, S]))
 
@@ -136,7 +144,10 @@ class SteerFuzzySystemProduct(SteerFuzzySystem):
             conclusion = Operations.binaryOperation(
                 conclusion, y_cutoff, Operations.zadehOr())
 
-        return int(self.defuzzier.decode(conclusion))
+        if return_conclusion:
+            return conclusion, int(self.defuzzier.decode(conclusion))
+        else:
+            return int(self.defuzzier.decode(conclusion))
 
 
 if __name__ == "__main__":

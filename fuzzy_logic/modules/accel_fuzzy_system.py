@@ -95,6 +95,11 @@ class AccelFuzzySystem(FuzzySystem):
     def conclude(self, L, D, LK, DK, V, S):
         pass
 
+    def evaluate_rule(self, singletons, rule, and_operator, or_operator):
+        conclusion = self.conclude_rule(
+            singletons, rule, and_operator, or_operator)
+        return conclusion, self.defuzzier(conclusion)
+
 
 class AccelFuzzySystemMin(AccelFuzzySystem):
 
@@ -103,7 +108,7 @@ class AccelFuzzySystemMin(AccelFuzzySystem):
         self.and_operator = min
         self.or_operator = max
 
-    def conclude(self, L, D, LK, DK, V, S):
+    def conclude(self, L, D, LK, DK, V, S, return_conclusion=False):
 
         singletons = list(map(DomainElement.of, [L, D, LK, DK, V, S]))
 
@@ -118,7 +123,10 @@ class AccelFuzzySystemMin(AccelFuzzySystem):
             conclusion = Operations.binaryOperation(
                 conclusion, y_cutoff, Operations.zadehOr())
 
-        return int(self.defuzzier.decode(conclusion))
+        if return_conclusion:
+            return conclusion, int(self.defuzzier.decode(conclusion))
+        else:
+            return int(self.defuzzier.decode(conclusion))
 
 
 class AccelFuzzySystemProduct(AccelFuzzySystem):
@@ -128,7 +136,7 @@ class AccelFuzzySystemProduct(AccelFuzzySystem):
         self.and_operator = min
         self.or_operator = lambda l: reduce(lambda x, y: x * y, l)
 
-    def conclude(self, L, D, LK, DK, V, S):
+    def conclude(self, L, D, LK, DK, V, S, return_conclusion=False):
 
         singletons = list(map(DomainElement.of, [L, D, LK, DK, V, S]))
 
@@ -143,7 +151,10 @@ class AccelFuzzySystemProduct(AccelFuzzySystem):
             conclusion = Operations.binaryOperation(
                 conclusion, y_cutoff, Operations.zadehOr())
 
-        return int(self.defuzzier.decode(conclusion))
+        if return_conclusion:
+            return conclusion, int(self.defuzzier.decode(conclusion))
+        else:
+            return int(self.defuzzier.decode(conclusion))
 
 
 if __name__ == "__main__":
