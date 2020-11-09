@@ -84,6 +84,24 @@ def generative_selection(elitism, no_elites):
     return selection
 
 
+def eliminative_selection(mortality):
+    def selection(population):
+        comb_population = []
+
+        death_row = int(mortality * len(population))
+
+        for _ in range(death_row):
+            three_parents = sorted(random.sample(
+                population, 3), key=lambda x: x.fitness)
+
+            comb_population.append([three_parents[0], three_parents[1]])
+            population.remove(three_parents[2])
+
+        return population, comb_population
+
+    return selection
+
+
 def mean_cross(mse_func):
     def mean_cross_function(comb_population):
         children = []
@@ -122,16 +140,30 @@ def mutation(mutation_probabilty):
 
 def main():
     x_y, targets = read_dataset('datasets/dataset1.txt')
-    genetic = GeneticAlgorithm(population_generation=generate_population(population_size=400, mse_func=mse(x_y, targets)),
-                               num_iter=500,
+    print('===================== Generating genetic =====================')
+    genetic = GeneticAlgorithm(population_generation=generate_population(population_size=150, mse_func=mse(x_y, targets)),
+                               num_iter=3000,
                                selection=generative_selection(
                                    elitism=True, no_elites=50),
                                combination=mean_cross(
                                    mse_func=mse(x_y, targets)),
-                               mutation=mutation(0.01),
+                               mutation=mutation(0.02),
                                solution=solution())
+    generating_best = genetic.evolution()
 
-    print(str(genetic.evolution()))
+    print('===================== Eliminating genetic =====================')
+    genetic = GeneticAlgorithm(population_generation=generate_population(population_size=150, mse_func=mse(x_y, targets)),
+                               num_iter=3000,
+                               selection=eliminative_selection(
+                                   mortality=.6),
+                               combination=mean_cross(
+                                   mse_func=mse(x_y, targets)),
+                               mutation=mutation(0.02),
+                               solution=solution())
+    elimination_best = genetic.evolution()
+
+    print('Generating best: {}'.format(generating_best))
+    print('Eliminating best: {}'.format(elimination_best))
 
 
 if __name__ == "__main__":
