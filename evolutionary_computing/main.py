@@ -139,10 +139,10 @@ def mutation(mutation_probabilty):
 
 
 def main():
-    x_y, targets = read_dataset('datasets/dataset1.txt')
+    x_y, targets = read_dataset('datasets/dataset2.txt')
     print('===================== Generating genetic =====================')
     genetic = GeneticAlgorithm(population_generation=generate_population(population_size=150, mse_func=mse(x_y, targets)),
-                               num_iter=3000,
+                               num_iter=1500,
                                selection=generative_selection(
                                    elitism=True, no_elites=50),
                                combination=mean_cross(
@@ -153,12 +153,12 @@ def main():
 
     print('===================== Eliminating genetic =====================')
     genetic = GeneticAlgorithm(population_generation=generate_population(population_size=150, mse_func=mse(x_y, targets)),
-                               num_iter=3000,
+                               num_iter=1500,
                                selection=eliminative_selection(
                                    mortality=.6),
                                combination=mean_cross(
                                    mse_func=mse(x_y, targets)),
-                               mutation=mutation(0.02),
+                               mutation=mutation(0.06),
                                solution=solution())
     elimination_best = genetic.evolution()
 
