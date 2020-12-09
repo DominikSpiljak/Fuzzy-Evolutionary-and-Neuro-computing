@@ -4,9 +4,14 @@ import numpy as np
 
 class DrawingCanvas():
 
-    def __init__(self, train_mode=False):
+    def __init__(self, train_mode=False, model=None):
         # In case of creating dataset, set train mode to True
         self.train_mode = train_mode
+
+        if not self.train_mode:
+            if model is None:
+                raise ValueError('Please define a model')
+            self.model = model
 
         # Number of points for sampling gestures
         self.M = 30
@@ -48,6 +53,10 @@ class DrawingCanvas():
             # Save dataset and end work
             self.root.bind('<Control-s>', self._write_dataset)
 
+        else:
+            self.predicted = tk.Label(self.canvas, text='Predicted: ')
+            self.predicted.place(x=1, y=1)
+
         self.canvas.pack(fill="both", expand=True)
         self.canvas.old_coords = None
 
@@ -72,6 +81,13 @@ class DrawingCanvas():
                 self.X.append(self.gesture_points)
                 self.y.append(self.current_label)
                 self._update_label_text()
+            else:
+                X = np.array([self.gesture_points])
+                preds = self.model.predict(X.reshape(
+                    X.shape[0], X.shape[1] * X.shape[2]))
+                pred_label = np.argmax(preds.ravel())
+                self.predicted['text'] = "Predicted: {}".format(
+                    self.symbol_map[pred_label])
 
     def _motion(self, event):
         x, y = event.x, event.y
