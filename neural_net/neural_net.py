@@ -37,47 +37,66 @@ class NeuralNet():
     def mean_squared_err(self, y_true, preds):
         return np.mean(np.square(y_true - preds))
 
-    def train(self, X, y, learning_rate=1e-3, n_epochs=10000, batch_size=None):
+    def train(self, X, y, learning_rate=1e-3, n_epochs=10000, algorithm='backprop', batch_size=10, shuffle=True):
+
+        if algorithm not in ['backprop', 'stohastic', 'minibatch']:
+            raise ValueError('Algorithm not recognised')
+
+        if algorithm == 'backprop':
+            batch_size = X.shape[0]
+
+        elif algorithm == 'stohastic':
+            batch_size = 1
 
         for i in range(n_epochs):
 
-            preds = self.forward(X)
+            if shuffle:
+                indices_permutation = np.random.permutation(X.shape[0])
+            else:
+                indices_permutation = np.arange(X.shape[0])
 
             if i % 100 == 0:
+                preds = self.forward(X)
                 print('Epoch: {}, Error: {}'.format(
                     i, self.mean_squared_err(preds, y)))
 
-            weight_errs = []
+            for j in range(0, X.shape[0], batch_size):
+                weight_errs = []
 
-            for i in range(len(self.forward_matrixes[:-1])):
-                if i == 0:
-                    out_err = preds - y
-                else:
-                    out_err = in_err.dot(self.weights[-i].T)
+                indices = indices_permutation[j:j + batch_size]
 
-                in_err = np.multiply(out_err, np.multiply(
-                    self.forward_matrixes[i], 1 - self.forward_matrixes[i]))
-                weight_err = in_err.T.dot(self.forward_matrixes[i + 1])
-                weight_errs.insert(0, weight_err.T)
+                preds = self.forward(X[indices])
 
-            for i in range(len(self.layers) - 1):
-                self.weights[i] -= learning_rate * weight_errs[i]
+                for i in range(len(self.forward_matrixes[:-1])):
+                    if i == 0:
+                        out_err = preds - y[indices]
+                    else:
+                        out_err = in_err.dot(self.weights[-i].T)
+
+                    in_err = np.multiply(out_err, np.multiply(
+                        self.forward_matrixes[i], 1 - self.forward_matrixes[i]))
+                    weight_err = in_err.T.dot(self.forward_matrixes[i + 1])
+                    weight_errs.insert(0, weight_err.T)
+
+                for i in range(len(self.layers) - 1):
+                    self.weights[i] -= learning_rate * weight_errs[i]
 
     def predict(self, X):
         return self.forward(X)
 
 
 def main():
-    npzdata = np.load('dataset.npz')
+    npzdata = np.load('dataset_40.npz')
     X = npzdata['X']
     X = X.reshape(X.shape[0], X.shape[1] * X.shape[2])
     y = npzdata['y']
 
     #nn = NeuralNet.load_model('model.pickle')
     nn = NeuralNet(input_layer_size=X.shape[1],
-                   hidden_layer_sizes=[16, 32, 16], output_layer_size=y.shape[1])
-    nn.train(X, y, n_epochs=100000)
-    with open('model.pickle', 'wb') as out:
+                   hidden_layer_sizes=[32, 32], output_layer_size=y.shape[1])
+    nn.train(X, y, n_epochs=50000, algorithm='minibatch',
+             batch_size=10, shuffle=True)
+    with open('model_minibatch_10.pickle', 'wb') as out:
         pickle.dump(nn.weights, out)
 
     DrawingCanvas(train_mode=False, model=nn)

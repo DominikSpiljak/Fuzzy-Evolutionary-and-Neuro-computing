@@ -14,10 +14,10 @@ class DrawingCanvas():
             self.model = model
 
         # Number of points for sampling gestures
-        self.M = 30
+        self.M = 40
 
         # File for saving dataset
-        self.dataset_name = 'dataset_1.npz'
+        self.dataset_name = 'dataset_40.npz'
 
         # Mapping numbers to symbols
         self.symbol_map = {
@@ -41,6 +41,7 @@ class DrawingCanvas():
             # In case of train mode create label to track current symbol and number of samples
             self.current_symbol_label = tk.Label(
                 self.canvas, text='alpha, number of samples: 0')
+            self.current_symbol_label.config(font=("Courier", 44))
             self.X = []
             self.y = []
             self.current_label = [1, 0, 0, 0, 0]
@@ -55,6 +56,7 @@ class DrawingCanvas():
 
         else:
             self.predicted = tk.Label(self.canvas, text='Predicted: ')
+            self.predicted.config(font=("Courier", 44))
             self.predicted.place(x=1, y=1)
 
         self.canvas.pack(fill="both", expand=True)
