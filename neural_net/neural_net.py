@@ -91,13 +91,13 @@ def main():
     X = X.reshape(X.shape[0], X.shape[1] * X.shape[2])
     y = npzdata['y']
 
-    #nn = NeuralNet.load_model('model.pickle')
-    nn = NeuralNet(input_layer_size=X.shape[1],
+    nn = NeuralNet.load_model('model_backprop.pickle')
+    """nn = NeuralNet(input_layer_size=X.shape[1],
                    hidden_layer_sizes=[32, 32], output_layer_size=y.shape[1])
     nn.train(X, y, n_epochs=50000, algorithm='minibatch',
              batch_size=10, shuffle=True)
     with open('model_minibatch_10.pickle', 'wb') as out:
-        pickle.dump(nn.weights, out)
+        pickle.dump(nn.weights, out)"""
 
     DrawingCanvas(train_mode=False, model=nn)
 
