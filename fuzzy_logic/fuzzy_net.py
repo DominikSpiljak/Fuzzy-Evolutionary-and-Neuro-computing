@@ -60,6 +60,8 @@ class ANFIS():
                 preds = self.forward(
                     X[indices], self.a[indices], self.b[indices], self.pq[indices], self.r[indices])
 
+                # TODO: Update parameters
+
     def predict(self, X):
         return self.forward(X, self.a, self.b, self.pq, self.r)
 
