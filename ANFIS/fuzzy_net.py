@@ -6,6 +6,7 @@ class ANFIS():
 
     def __init__(self, no_variables=2, no_rules=None):
         if no_variables is not None and no_rules is not None:
+            self.no_rules = no_rules
             self.p = np.random.randn(no_rules, 1)
             self.q = np.random.randn(no_rules, 1)
             self.r = np.zeros((no_rules, 1))
@@ -28,7 +29,7 @@ class ANFIS():
             # 1. layer: Fuzzification
             fuzzified = self.fuzzification_sigmoid(x_y)
 
-            # 2. layer: Product of inputs
+            # 2. layer: T-norm of inputs
             products = np.product(fuzzified, axis=1)
 
             alphas.append(products)
@@ -70,28 +71,32 @@ class ANFIS():
                 indices = np.arange(X_Y.shape[0])
 
             for j in range(0, X_Y.shape[0], batch_size):
-                weight_errs = []
 
                 sliced_indices = indices[j:j + batch_size]
 
                 preds, alphas = self.forward(
                     X_Y[sliced_indices], underflow_ctrl=underflow_ctrl)
 
-            x, y = X_Y[sliced_indices].T
+                x, y = X_Y[sliced_indices].T
 
-            x = x.reshape(x.shape[0], 1)
-            y = y.reshape(y.shape[0], 1)
+                x = x.reshape(x.shape[0], 1)
+                y = y.reshape(y.shape[0], 1)
 
-            Ek_pi = - 1 * (z - preds) * \
-                ((x.T.dot(alphas)) / np.sum(alphas, axis=0))
+                dEk_dpreds = -1 * (z[sliced_indices] - preds)
+                alpha_sum = np.sum(alphas, axis=1)
 
-            Ek_qi = - 1 * (z - preds) * \
-                ((y.T.dot(alphas)) / np.sum(alphas, axis=0))
+                dEk_dp = np.sum([[dEk_dpreds[k] * alphas[k][i] * x[k] / alpha_sum[k]
+                                  for i in range(self.no_rules)] for k in range(len(x))], axis=0)
 
-            Ek_ri = - 1 * (z - preds) * \
-                ((alphas) / np.sum(alphas, axis=0))
+                dEk_dq = np.sum([[dEk_dpreds[k] * alphas[k][i] * y[k] / alpha_sum[k]
+                                  for i in range(self.no_rules)] for k in range(len(y))], axis=0)
 
-            # TODO: fix dimensions
+                dEk_dr = np.sum([[dEk_dpreds[k] * alphas[k][i] / alpha_sum[k]
+                                  for i in range(self.no_rules)] for k in range(len(x))], axis=0)
+
+                self.p = self.p - learning_rate * dEk_dp
+                self.q = self.q - learning_rate * dEk_dq
+                self.r = self.r - learning_rate * dEk_dr
 
     def predict(self, X_Y, underflow_ctrl=1e-12):
         preds, _ = self.forward(X_Y, underflow_ctrl=underflow_ctrl)
@@ -99,7 +104,9 @@ class ANFIS():
 
 
 if __name__ == "__main__":
-    anfis = ANFIS(2, 2)
-    X_Y = [[0, 0], [1, 1], [2, 2], [3, 3]]
-    z = [[0], [2], [4], [4]]
-    anfis.train(np.array(X_Y), np.array(z), n_epochs=1, shuffle=False)
+    anfis = ANFIS(no_rules=200)
+    X_Y = [[0, 0], [3, 1], [2, 1], [100, 3], [100, 3], [
+        100, 3], [100, 3], [100, 3], [100, 3], [100, 3]]
+    z = [[0], [2], [4], [4], [4], [4], [4], [4], [4], [4]]
+    anfis.train(np.array(X_Y), np.array(z), n_epochs=10000,
+                learning_rate=1e-4, shuffle=False)
