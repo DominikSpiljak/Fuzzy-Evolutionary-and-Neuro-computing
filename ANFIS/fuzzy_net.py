@@ -298,11 +298,13 @@ def draw_losses(gradient, stohastic, save_img=None):
     ax[0].set_title('Error over epoch for gradient algoritm')
     ax[0].set_xlabel('Epochs')
     ax[0].set_ylabel('Errors')
+    ax[0].set_ylim(0, 4)
     ax[0].plot(range(len(gradient)), gradient)
 
     ax[1].set_title('Error over epoch for stohastic algoritm')
     ax[1].set_xlabel('Epochs')
     ax[1].set_ylabel('Errors')
+    ax[1].set_ylim(0, 4)
     ax[1].plot(range(len(stohastic)), stohastic)
 
     plt.show()
@@ -357,7 +359,7 @@ if __name__ == "__main__":
 
     # anfis5.save_model('model5_gradient_high_lr.npz')
 
-    anfis5 = ANFIS(no_rules=5)
+    """anfis5 = ANFIS(no_rules=5)
     history_stohastic = anfis5.train(X_Y, z, algorithm='stohastic', n_epochs=10000, learning_rate=1e-4, learning_rate_fuzzification=5e-6,
                                      lr_decay=0.8, decay_interval=2500, shuffle=False)
 
@@ -372,8 +374,8 @@ if __name__ == "__main__":
     np.save('history_gradient_low_lr.npy', history_gradient)
 
     anfis5.save_model('model5_gradient_low_lr.npz')
-
-    anfis5 = ANFIS.load_model('model5_gradient.npz')
+"""
+    anfis5 = ANFIS.load_model('model5_stohastic.npz')
 
     draw_func([func, anfis1.predict, anfis2.predict,
                anfis5.predict], no_rules=[1, 2, 5], save_img='func_approx.png')
@@ -385,6 +387,12 @@ if __name__ == "__main__":
 
     history_gradient = np.load('history_gradient.npy')
     history_stohastic = np.load('history_stohastic.npy')
+    history_gradient_low_lr = np.load('history_gradient_low_lr.npy')
+    history_stohastic_low_lr = np.load('history_stohastic_low_lr.npy')
+    history_gradient_high_lr = np.load('history_gradient_high_lr.npy')
+    history_stohastic_high_lr = np.load('history_stohastic_high_lr.npy')
 
     draw_losses(history_gradient, history_stohastic,
                 save_img='errors_for_algorithms.png')
+    draw_losses_with_lrs(history_gradient=[history_gradient_low_lr, history_gradient, history_gradient_high_lr], history_stohastic=[
+                         history_stohastic_low_lr, history_stohastic, history_stohastic_high_lr], save_img='errors_for_algorithms_lrs.png')
