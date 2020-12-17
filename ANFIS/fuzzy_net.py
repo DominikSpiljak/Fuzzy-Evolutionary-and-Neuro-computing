@@ -251,8 +251,8 @@ def draw_error_curves(funcs, no_rules, save_img=None):
         ax[i].set_xlabel('X')
         ax[i].set_ylabel('Y')
         ax[i].set_zlabel('Z')
-        ax[i].view_init(elev=0., azim=0)
     plt.show()
+    fig.tight_layout()
     if save_img is not None:
         fig.savefig(save_img)
 
@@ -308,7 +308,41 @@ def draw_losses(gradient, stohastic, save_img=None):
     ax[1].plot(range(len(stohastic)), stohastic)
 
     plt.show()
+    fig.tight_layout()
 
+    if save_img is not None:
+        fig.savefig(save_img)
+
+
+def draw_losses_with_lrs(history_gradient, history_stohastic, save_img=None):
+    lrs = [[1e-4, 5e-6], [5e-3, 1e-4], [3e-2, 5e-3]]
+    labels = ['Low learning rate, learning_rate={}, fuzzification_learning_rate={}',
+              'Optimal learning rate, learning_rate={}, fuzzification_learning_rate={}',
+              'High learning rate, learning_rate={}, fuzzification_learning_rate={}']
+
+    fig, ax = plt.subplots(3, 2)
+    fig.set_size_inches(18, 15)
+
+    for i, histories in enumerate(zip(history_gradient, history_stohastic)):
+        grad, stoh = histories
+        ax[i][0].set_title('Gradient algorithm, {}'.format(
+            labels[i].format(*lrs[i])))
+        ax[i][0].plot(range(len(grad)), grad)
+        if i != 2:
+            ax[i][0].set_ylim(0, 10)
+        else:
+            ax[i][0].set_ylim(0, 10000)
+        ax[i][0].set_ylabel('Errors')
+
+        ax[i][1].set_title('Stohastic algorithm, {}'.format(
+            labels[i].format(*lrs[i])))
+        ax[i][1].plot(range(len(stoh)), stoh)
+        ax[i][1].set_ylim(0, 10)
+        ax[i][1].set_ylabel('Errors')
+
+    fig.tight_layout()
+    fig.subplots_adjust(hspace=0.243, wspace=0.077)
+    plt.show()
     if save_img is not None:
         fig.savefig(save_img)
 
@@ -359,22 +393,22 @@ if __name__ == "__main__":
 
     # anfis5.save_model('model5_gradient_high_lr.npz')
 
-    """anfis5 = ANFIS(no_rules=5)
-    history_stohastic = anfis5.train(X_Y, z, algorithm='stohastic', n_epochs=10000, learning_rate=1e-4, learning_rate_fuzzification=5e-6,
-                                     lr_decay=0.8, decay_interval=2500, shuffle=False)
+    # anfis5 = ANFIS(no_rules=5)
+    # history_stohastic = anfis5.train(X_Y, z, algorithm='stohastic', n_epochs=10000, learning_rate=1e-4, learning_rate_fuzzification=5e-6,
+    #                                  lr_decay=0.8, decay_interval=2500, shuffle=False)
 
-    np.save('history_stohastic_low_lr.npy', history_stohastic)
+    # np.save('history_stohastic_low_lr.npy', history_stohastic)
 
-    anfis5.save_model('model5_stohastic_low_lr.npz')
+    # anfis5.save_model('model5_stohastic_low_lr.npz')
 
-    anfis5 = ANFIS(no_rules=5)
-    history_gradient = anfis5.train(X_Y, z, n_epochs=10000, learning_rate=1e-4, learning_rate_fuzzification=5e-6,
-                                    lr_decay=0.8, decay_interval=2500, shuffle=False)
+    # anfis5 = ANFIS(no_rules=5)
+    # history_gradient = anfis5.train(X_Y, z, n_epochs=10000, learning_rate=1e-4, learning_rate_fuzzification=5e-6,
+    #                                 lr_decay=0.8, decay_interval=2500, shuffle=False)
 
-    np.save('history_gradient_low_lr.npy', history_gradient)
+    # np.save('history_gradient_low_lr.npy', history_gradient)
 
-    anfis5.save_model('model5_gradient_low_lr.npz')
-"""
+    # anfis5.save_model('model5_gradient_low_lr.npz')
+
     anfis5 = ANFIS.load_model('model5_stohastic.npz')
 
     draw_func([func, anfis1.predict, anfis2.predict,
