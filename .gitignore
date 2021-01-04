@@ -4,3 +4,4 @@
 *.npz
 *lock*
 *.odt
+*vscode*
