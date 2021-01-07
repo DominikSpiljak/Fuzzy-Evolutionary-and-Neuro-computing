@@ -33,9 +33,9 @@ class EvolutionalNeuralNet:
             self.layers = layers
 
             weights = np.array([np.random.randn(
-                self.layers[i + 1], self.layers[i + 2]) for i in range(len(self.layers) - 2)], dtype='object')
+                self.layers[i + 1], self.layers[i + 2]) for i in range(len(self.layers) - 2)])
             biases = np.array([np.random.randn((layer))
-                               for layer in self.layers[2:]], dtype='object')
+                               for layer in self.layers[2:]])
             neuron_type1_weights = np.random.rand(
                 self.layers[1], self.layers[0])
             neuron_type1_s = np.random.randn(self.layers[1], self.layers[0])
@@ -90,7 +90,7 @@ class EvolutionalNeuralNet:
         # Decode neuron_type1_s
         neuron_type1_s = np.array(params[index:index + layers[1] * layers[0]]).reshape(layers[1], layers[0])
 
-        return np.array(weights, dtype='object'), np.array(biases, dtype='object'), np.array(neuron_type1_weights), np.array(neuron_type1_s)
+        return np.array(weights), np.array(biases), np.array(neuron_type1_weights), np.array(neuron_type1_s)
     
     @staticmethod
     def forward(X, params, layers):
@@ -342,20 +342,20 @@ def test_neuron(w, s, save_file=None):
 def main():
     global ds, layers
     ds = Dataset('dataset.txt')
-    layers = [2, 8, 4, 3]
+    layers = [2, 8, 3]
     # test_neuron(2, [1, 0.25, 4], save_file='test_neuron.png')
     # plot_data(ds, save_file='data_visualisation.png')
     mutation_prob = 0.1
     genetic_algorithm = GeneticAlgorithm(population_generation=generate_population(100, EvolutionalNeuralNet(layers).get_no_params()),
-                                         num_iter=10000,
+                                         num_iter=500000,
                                          selection=tournament_selection(k=3),
                                          combination=cross_chooser(
                                              [arithmetic_cross_float(), mean_cross(), heuristic_cross()]),
-                                         mutation=mutation_chooser([mutation_1(mutation_prob, 0.1),
+                                         mutation=mutation_chooser([mutation_1(mutation_prob, 0.5),
                                                                     mutation_1(
-                                                                        mutation_prob, 1),
-                                                                    mutation_2(mutation_prob, 0.1)],
-                                                                   probs=[0.5, 0.3, 0.2]),
+                                                                        mutation_prob, 2),
+                                                                    mutation_2(mutation_prob, 0.5)],
+                                                                   probs=[0.7, 0.2, 0.1]),
                                          solution=solution())
 
     best = genetic_algorithm.evolution()
