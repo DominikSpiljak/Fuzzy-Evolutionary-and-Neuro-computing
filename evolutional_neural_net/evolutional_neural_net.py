@@ -33,9 +33,9 @@ class EvolutionalNeuralNet:
             self.layers = layers
 
             weights = np.array([np.random.randn(
-                self.layers[i + 1], self.layers[i + 2]) for i in range(len(self.layers) - 2)])
+                self.layers[i + 1], self.layers[i + 2]) for i in range(len(self.layers) - 2)], dtype='object')
             biases = np.array([np.random.randn((layer))
-                               for layer in self.layers[2:]])
+                               for layer in self.layers[2:]], dtype='object')
             neuron_type1_weights = np.random.rand(
                 self.layers[1], self.layers[0])
             neuron_type1_s = np.random.randn(self.layers[1], self.layers[0])
@@ -63,7 +63,7 @@ class EvolutionalNeuralNet:
 
     @staticmethod
     def error(dataset, params, layers):
-        return 1 / dataset.size() * (np.sum(np.square(EvolutionalNeuralNet.forward(dataset.X, params, layers) - dataset.y)))
+        return np.mean(np.sum(np.square(EvolutionalNeuralNet.forward(dataset.X, params, layers) - dataset.y), axis=1))
 
     @staticmethod
     def decode_params(params, layers):
@@ -90,7 +90,7 @@ class EvolutionalNeuralNet:
         # Decode neuron_type1_s
         neuron_type1_s = np.array(params[index:index + layers[1] * layers[0]]).reshape(layers[1], layers[0])
 
-        return np.array(weights), np.array(biases), np.array(neuron_type1_weights), np.array(neuron_type1_s)
+        return np.array(weights, dtype='object'), np.array(biases, dtype='object'), np.array(neuron_type1_weights), np.array(neuron_type1_s)
     
     @staticmethod
     def forward(X, params, layers):
@@ -119,7 +119,7 @@ class Individual:
         self.layers = layers
 
     def __eq__(self, other):
-        return self.value == other.value
+        return np.all(self.value == other.value)
 
     def __str__(self):
         return "Fitness = {}".format(self.fitness)
@@ -180,6 +180,19 @@ def roulette_selection(elitism=True, no_elites=1):
                 [population[choose_index(proportions)], population[choose_index(proportions)]])
 
         return new_population, comb_population
+
+    return selection
+
+
+
+def tournament_selection(k=3):
+    def selection(population):
+        selected = np.random.choice(population, k, replace=False)
+        selected_sorted = sorted(selected, key=lambda x: x.fitness)
+        comb_population = [[selected_sorted[0], selected_sorted[1]]]
+        population.remove(selected_sorted[-1])
+
+        return population, comb_population
 
     return selection
 
@@ -329,26 +342,25 @@ def test_neuron(w, s, save_file=None):
 def main():
     global ds, layers
     ds = Dataset('dataset.txt')
-    layers = [2, 8, 3]
+    layers = [2, 8, 4, 3]
     # test_neuron(2, [1, 0.25, 4], save_file='test_neuron.png')
     # plot_data(ds, save_file='data_visualisation.png')
     mutation_prob = 0.1
     genetic_algorithm = GeneticAlgorithm(population_generation=generate_population(100, EvolutionalNeuralNet(layers).get_no_params()),
-                                         num_iter=1000,
-                                         selection=roulette_selection(
-                                             elitism=True, no_elites=20),
+                                         num_iter=10000,
+                                         selection=tournament_selection(k=3),
                                          combination=cross_chooser(
                                              [arithmetic_cross_float(), mean_cross(), heuristic_cross()]),
-                                         mutation=mutation_chooser([mutation_1(mutation_prob, 0.5),
+                                         mutation=mutation_chooser([mutation_1(mutation_prob, 0.1),
                                                                     mutation_1(
-                                                                        mutation_prob, 3),
-                                                                    mutation_2(mutation_prob, 0.5)],
-                                                                   probs=[0.6, 0.2, 0.2]),
+                                                                        mutation_prob, 1),
+                                                                    mutation_2(mutation_prob, 0.1)],
+                                                                   probs=[0.5, 0.3, 0.2]),
                                          solution=solution())
 
     best = genetic_algorithm.evolution()
 
-    best.save_individual("best_individual_283.pickle")
+    best.save_individual("best_individual_{}.pickle".format(''.join([str(layer) for layer in layers])))
 
     _, _, neuron_type1_weights, _ = EvolutionalNeuralNet.decode_params(best.value, layers)
 
