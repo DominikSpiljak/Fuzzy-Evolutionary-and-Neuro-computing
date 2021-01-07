@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import json
+import pickle
 from genetic_algorithm import GeneticAlgorithm
 
 
@@ -28,10 +28,9 @@ class Dataset:
 
 
 class EvolutionalNeuralNet:
-    def __init__(self, input_layer_size=None, hidden_layer_sizes=None, output_layer_size=None):
-        if input_layer_size is not None:
-            self.layers = [input_layer_size, *
-                           hidden_layer_sizes, output_layer_size]
+    def __init__(self, layers=None):
+        if layers is not None:
+            self.layers = layers
 
             weights = np.array([np.random.randn(
                 self.layers[i + 1], self.layers[i + 2]) for i in range(len(self.layers) - 2)])
@@ -55,73 +54,58 @@ class EvolutionalNeuralNet:
             self.params = [*weights_list, *biases_list,
                            *neuron_type1_weights_list, *neuron_type1_s_list]
 
-    @staticmethod
-    def load_model(path):
-        with open(path, 'r') as inp:
-            state_dict = json.load(inp)
-
-        model = EvolutionalNeuralNet()
-        model.layers = state_dict['layers']
-        model.params = state_dict['params']
-        return model
-
     def get_no_params(self):
         return len(self.params)
 
-    def sigmoid(self, X):
+    @staticmethod
+    def sigmoid(X):
         return 1 / (1 + np.exp(-1 * X))
 
-    def error(self, dataset):
-        return 1 / dataset.size() * (np.sum(np.square(self.forward(dataset.X) - dataset.y)))
+    @staticmethod
+    def error(dataset, params, layers):
+        return 1 / dataset.size() * (np.sum(np.square(EvolutionalNeuralNet.forward(dataset.X, params, layers) - dataset.y)))
 
-    def save(self, path):
-        state_dict = {'layers': self.layers, 'params': self.params}
-        with open(path, 'w') as out:
-            json.dump(state_dict, out)
-
-    def decode_params(self):
+    @staticmethod
+    def decode_params(params, layers):
         weights = []
         biases = []
         neuron_type1_weights = []
         neuron_type1_s = []
         index = 0
         # Decode weights
-        for i in range(len(self.layers) - 2):
-            weights.append(np.array(
-                self.params[index:index + self.layers[i + 1] * self.layers[i + 2]]).reshape(self.layers[i + 1], self.layers[i + 2]))
-            index += self.layers[i + 1] * self.layers[i + 2]
+        for i in range(len(layers) - 2):
+            weights.append(np.array(params[index:index + layers[i + 1] * layers[i + 2]]).reshape(layers[i + 1], layers[i + 2]))
+            index += layers[i + 1] * layers[i + 2]
 
         # Decode biases
-        for layer in self.layers[2:]:
-            biases.append(np.array(self.params[index:index + layer]))
+        for layer in layers[2:]:
+            biases.append(np.array(params[index:index + layer]))
             index += layer
 
         # Decode neuron_type1_weights
-        neuron_type1_weights = np.array(
-            self.params[index:index + self.layers[1] * self.layers[0]]).reshape(self.layers[1], self.layers[0])
+        neuron_type1_weights = np.array(params[index:index + layers[1] * layers[0]]).reshape(layers[1], layers[0])
 
-        index += self.layers[1] * self.layers[0]
+        index += layers[1] * layers[0]
 
         # Decode neuron_type1_s
-        neuron_type1_s = np.array(
-            self.params[index:index + self.layers[1] * self.layers[0]]).reshape(self.layers[1], self.layers[0])
+        neuron_type1_s = np.array(params[index:index + layers[1] * layers[0]]).reshape(layers[1], layers[0])
 
         return np.array(weights), np.array(biases), np.array(neuron_type1_weights), np.array(neuron_type1_s)
-
-    def forward(self, X):
-        weights, biases, neuron_type1_weights, neuron_type1_s = self.decode_params()
+    
+    @staticmethod
+    def forward(X, params, layers):
+        weights, biases, neuron_type1_weights, neuron_type1_s = EvolutionalNeuralNet.decode_params(params, layers)
         outs = []
         for x in X:
-            last_out = 1 / \
-                (1 + np.array([np.linalg.norm(neuron_type1_weights[i] - x) / np.linalg.norm(
-                    neuron_type1_s[i]) for i in range(len(neuron_type1_weights))]))
-            for i in range(len(self.layers[2:])):
-                last_out = self.sigmoid(last_out.dot(weights[i]) + biases[i])
+            last_out = 1 /  (1 + np.linalg.norm(neuron_type1_weights - x, axis=1) / np.linalg.norm(neuron_type1_s, axis=1))
+            for i in range(len(layers[2:])):
+                last_out = EvolutionalNeuralNet.sigmoid(last_out.dot(weights[i]) + biases[i])
             outs.append(last_out)
         return np.array(outs)
 
-    def predict(self, X):
-        return np.argmax(self.forward(X), axis=1)
+    @staticmethod
+    def predict(X, params):
+        return np.argmax(EvolutionalNeuralNet.forward(X, params, layers), axis=1)
 
     def get_param_list(self):
         return self.params
@@ -129,15 +113,10 @@ class EvolutionalNeuralNet:
 
 class Individual:
 
-    def __init__(self, neural_net, dataset):
-        self.neural_net = neural_net
-        self.value = np.array(neural_net.get_param_list())
-        self.fitness = self.neural_net.error(dataset)
-
-    @staticmethod
-    def create_with_value(value, layers, dataset):
-        ind = Individual(EvolutionalNeuralNet(*layers), dataset)
-        return ind
+    def __init__(self, value, dataset, layers):
+        self.value = value
+        self.fitness = EvolutionalNeuralNet.error(dataset, value, layers)
+        self.layers = layers
 
     def __eq__(self, other):
         return self.value == other.value
@@ -145,13 +124,16 @@ class Individual:
     def __str__(self):
         return "Fitness = {}".format(self.fitness)
 
+    def save_individual(self, filename):
+        with open(filename, 'wb') as out:
+            pickle.dump(self, out)
 
-def generate_population(population_size):
+
+def generate_population(population_size, no_params):
     def population_generation():
         population = []
         for _ in range(population_size):
-            population.append(Individual(
-                EvolutionalNeuralNet(*layers), ds))
+            population.append(Individual(np.random.rand(no_params) * 2 - 1, ds, layers))
 
         return population
 
@@ -209,8 +191,7 @@ def mean_cross():
             individual0_vals = pair[0].value
             individual1_vals = pair[1].value
             child_vals = (individual0_vals + individual1_vals) / 2
-            children.append(Individual.create_with_value(
-                np.array(child_vals), layers, ds))
+            children.append(Individual(child_vals, ds, layers))
         return children
 
     return mean_cross_function
@@ -223,11 +204,22 @@ def arithmetic_cross_float():
             rand = np.random.rand(pair[0].value.shape[0])
             child_vals = pair[0].value * rand + pair[1].value * (1 - rand)
 
-            children.append(Individual.create_with_value(
-                np.array(child_vals), layers, ds))
+            children.append(Individual(child_vals, ds, layers))
         return children
 
     return arithmetic_cross_function
+
+def heuristic_cross():
+    def heuristic_cross_float(comb_population):
+        children = []
+        for pair in comb_population:
+            rand = np.random.rand(pair[0].value.shape[0])
+            child_vals = rand * (pair[1].value - pair[0].value) + pair[1].value
+
+            children.append(Individual(child_vals, ds, layers))
+        return children
+
+    return heuristic_cross_float
 
 
 def cross_chooser(cross_list):
@@ -337,26 +329,31 @@ def test_neuron(w, s, save_file=None):
 def main():
     global ds, layers
     ds = Dataset('dataset.txt')
-    layers = [2, [8], 3]
+    layers = [2, 8, 3]
     # test_neuron(2, [1, 0.25, 4], save_file='test_neuron.png')
     # plot_data(ds, save_file='data_visualisation.png')
-    mutation_prob = 0.02
-    genetic_algorithm = GeneticAlgorithm(population_generation=generate_population(100),
-                                         num_iter=10000,
+    mutation_prob = 0.1
+    genetic_algorithm = GeneticAlgorithm(population_generation=generate_population(100, EvolutionalNeuralNet(layers).get_no_params()),
+                                         num_iter=1000,
                                          selection=roulette_selection(
-                                             elitism=True, no_elites=30),
+                                             elitism=True, no_elites=20),
                                          combination=cross_chooser(
-                                             [arithmetic_cross_float(), mean_cross()]),
-                                         mutation=mutation_chooser([mutation_1(mutation_prob, 1),
+                                             [arithmetic_cross_float(), mean_cross(), heuristic_cross()]),
+                                         mutation=mutation_chooser([mutation_1(mutation_prob, 0.5),
                                                                     mutation_1(
-                                                                        mutation_prob, 5),
-                                                                    mutation_2(mutation_prob, 1)],
+                                                                        mutation_prob, 3),
+                                                                    mutation_2(mutation_prob, 0.5)],
                                                                    probs=[0.6, 0.2, 0.2]),
                                          solution=solution())
 
     best = genetic_algorithm.evolution()
-    _, _, neuron_type1_weights, neuron_type1_s = best.neural_net.decode_params()
-    plot_data(ds, neuron_weights=neuron_type1_weights)
+
+    best.save_individual("best_individual_283.pickle")
+
+    _, _, neuron_type1_weights, _ = EvolutionalNeuralNet.decode_params(best.value, layers)
+
+    plot_data(ds, neuron_weights=neuron_type1_weights, save_file="data_visualisation_with_neuron_weights.png")
+
 
 
 if __name__ == "__main__":
