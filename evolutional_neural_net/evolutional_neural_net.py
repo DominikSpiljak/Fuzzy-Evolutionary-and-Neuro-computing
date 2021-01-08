@@ -74,7 +74,8 @@ class EvolutionalNeuralNet:
         index = 0
         # Decode weights
         for i in range(len(layers) - 2):
-            weights.append(np.array(params[index:index + layers[i + 1] * layers[i + 2]]).reshape(layers[i + 1], layers[i + 2]))
+            weights.append(np.array(
+                params[index:index + layers[i + 1] * layers[i + 2]]).reshape(layers[i + 1], layers[i + 2]))
             index += layers[i + 1] * layers[i + 2]
 
         # Decode biases
@@ -83,23 +84,28 @@ class EvolutionalNeuralNet:
             index += layer
 
         # Decode neuron_type1_weights
-        neuron_type1_weights = np.array(params[index:index + layers[1] * layers[0]]).reshape(layers[1], layers[0])
+        neuron_type1_weights = np.array(
+            params[index:index + layers[1] * layers[0]]).reshape(layers[1], layers[0])
 
         index += layers[1] * layers[0]
 
         # Decode neuron_type1_s
-        neuron_type1_s = np.array(params[index:index + layers[1] * layers[0]]).reshape(layers[1], layers[0])
+        neuron_type1_s = np.array(
+            params[index:index + layers[1] * layers[0]]).reshape(layers[1], layers[0])
 
         return np.array(weights), np.array(biases), np.array(neuron_type1_weights), np.array(neuron_type1_s)
-    
+
     @staticmethod
     def forward(X, params, layers):
-        weights, biases, neuron_type1_weights, neuron_type1_s = EvolutionalNeuralNet.decode_params(params, layers)
+        weights, biases, neuron_type1_weights, neuron_type1_s = EvolutionalNeuralNet.decode_params(
+            params, layers)
         outs = []
         for x in X:
-            last_out = 1 /  (1 + np.linalg.norm(neuron_type1_weights - x, axis=1) / np.linalg.norm(neuron_type1_s, axis=1))
+            last_out = 1 / (1 + np.linalg.norm(neuron_type1_weights - x,
+                                               axis=1) / np.linalg.norm(neuron_type1_s, axis=1))
             for i in range(len(layers[2:])):
-                last_out = EvolutionalNeuralNet.sigmoid(last_out.dot(weights[i]) + biases[i])
+                last_out = EvolutionalNeuralNet.sigmoid(
+                    last_out.dot(weights[i]) + biases[i])
             outs.append(last_out)
         return np.array(outs)
 
@@ -133,7 +139,8 @@ def generate_population(population_size, no_params):
     def population_generation():
         population = []
         for _ in range(population_size):
-            population.append(Individual(np.random.rand(no_params) * 2 - 1, ds, layers))
+            population.append(Individual(
+                np.random.rand(no_params) * 2 - 1, ds, layers))
 
         return population
 
@@ -184,7 +191,6 @@ def roulette_selection(elitism=True, no_elites=1):
     return selection
 
 
-
 def tournament_selection(k=3):
     def selection(population):
         selected = np.random.choice(population, k, replace=False)
@@ -197,21 +203,21 @@ def tournament_selection(k=3):
     return selection
 
 
-def mean_cross():
-    def mean_cross_function(comb_population):
+def simple_arithmetic_recombination():
+    def arithmetic_recombination_function(comb_population):
         children = []
         for pair in comb_population:
-            individual0_vals = pair[0].value
-            individual1_vals = pair[1].value
-            child_vals = (individual0_vals + individual1_vals) / 2
+            rand = int(np.random.rand() * len(pair[0].value))
+            child_vals = np.array(
+                list(pair[0].value[:rand]) + list((pair[0].value[rand:] + pair[1].value[rand:]) / 2))
             children.append(Individual(child_vals, ds, layers))
         return children
 
-    return mean_cross_function
+    return arithmetic_recombination_function
 
 
-def arithmetic_cross_float():
-    def arithmetic_cross_function(comb_population):
+def simulated_binary_cross():
+    def simulated_binary_function(comb_population):
         children = []
         for pair in comb_population:
             rand = np.random.rand(pair[0].value.shape[0])
@@ -220,19 +226,21 @@ def arithmetic_cross_float():
             children.append(Individual(child_vals, ds, layers))
         return children
 
-    return arithmetic_cross_function
+    return simulated_binary_function
 
-def heuristic_cross():
-    def heuristic_cross_float(comb_population):
+
+def discrete_recombination_cross():
+    def discrete_recombination_cross(comb_population):
         children = []
         for pair in comb_population:
-            rand = np.random.rand(pair[0].value.shape[0])
-            child_vals = rand * (pair[1].value - pair[0].value) + pair[1].value
+            rand = (np.random.rand(len(pair[0].value)) > .5).astype(int)
+            child_vals = np.array([pair[r].value[i]
+                                   for i, r in enumerate(rand)])
 
             children.append(Individual(child_vals, ds, layers))
         return children
 
-    return heuristic_cross_float
+    return discrete_recombination_cross
 
 
 def cross_chooser(cross_list):
@@ -345,27 +353,30 @@ def main():
     layers = [2, 8, 3]
     # test_neuron(2, [1, 0.25, 4], save_file='test_neuron.png')
     # plot_data(ds, save_file='data_visualisation.png')
-    mutation_prob = 0.1
-    genetic_algorithm = GeneticAlgorithm(population_generation=generate_population(100, EvolutionalNeuralNet(layers).get_no_params()),
-                                         num_iter=500000,
-                                         selection=tournament_selection(k=3),
+    mutation_prob = 0.2
+    genetic_algorithm = GeneticAlgorithm(population_generation=generate_population(40, EvolutionalNeuralNet(layers).get_no_params()),
+                                         num_iter=1000000,
+                                         selection=tournament_selection(k=5),
                                          combination=cross_chooser(
-                                             [arithmetic_cross_float(), mean_cross(), heuristic_cross()]),
-                                         mutation=mutation_chooser([mutation_1(mutation_prob, 0.5),
+                                             [simulated_binary_cross(), simple_arithmetic_recombination(), discrete_recombination_cross()]),
+                                         mutation=mutation_chooser([mutation_1(mutation_prob, 0.3),
                                                                     mutation_1(
-                                                                        mutation_prob, 2),
-                                                                    mutation_2(mutation_prob, 0.5)],
-                                                                   probs=[0.7, 0.2, 0.1]),
+                                                                        mutation_prob, 1),
+                                                                    mutation_2(mutation_prob, 0.3)],
+                                                                   probs=[0.6, 0.2, 0.2]),
                                          solution=solution())
 
     best = genetic_algorithm.evolution()
 
-    best.save_individual("best_individual_{}.pickle".format(''.join([str(layer) for layer in layers])))
+    best.save_individual("best_individual_{}_1.pickle".format(
+        ''.join([str(layer) for layer in layers])))
 
-    _, _, neuron_type1_weights, _ = EvolutionalNeuralNet.decode_params(best.value, layers)
+    _, _, neuron_type1_weights, _ = EvolutionalNeuralNet.decode_params(
+        best.value, layers)
 
-    plot_data(ds, neuron_weights=neuron_type1_weights, save_file="data_visualisation_with_neuron_weights.png")
-
+    plot_data(ds, neuron_weights=neuron_type1_weights,
+              save_file="data_visualisation_with_neuron_weights_{}_1.png".format(
+                  ''.join([str(layer) for layer in layers])))
 
 
 if __name__ == "__main__":
