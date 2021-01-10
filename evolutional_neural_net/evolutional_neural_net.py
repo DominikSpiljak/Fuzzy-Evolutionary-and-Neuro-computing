@@ -114,16 +114,18 @@ class EvolutionalNeuralNet:
             trace_.append(x_trace)
 
         if trace:
-            return np.array(outs), np.array(trace_)
+            return np.array(outs, dtype='object'), np.array(trace_, dtype='object')
         else:
-            return np.array(outs)
+            return np.array(outs, dtype='object')
 
     @staticmethod
     def train(params, dataset, layers, n_iter, lr):
         # TODO: Finish updating neuron type 1 params
         for i in range(n_iter):
-            """print('Iteration {}, error {}'.format(
-                i, EvolutionalNeuralNet.error(dataset, params, layers)))"""
+            if i % 100 == 0:
+                """print('Iteration {}, error {}'.format(
+                    i, EvolutionalNeuralNet.error(dataset, params, layers)))"""
+                pass
             preds, trace = EvolutionalNeuralNet.forward(
                 dataset.X, params, layers, trace=True)
 
@@ -133,24 +135,40 @@ class EvolutionalNeuralNet:
             for i, x_trace in enumerate(trace):
                 bias_errs = []
                 weight_errs = []
-                x_trace_r = np.array(list(reversed(x_trace)))
+                x_trace_r = np.array(list(reversed(x_trace)), dtype='object')
                 for j, layer_out in enumerate(x_trace_r):
                     if j == 0:
                         out_err = (preds[j] - dataset.y[j]
                                    ).reshape(len(preds[j]), 1)
                     else:
                         out_err = weights[-j].dot(in_err)
-
-                    in_err = np.multiply(
-                        out_err, np.multiply(layer_out, 1 - layer_out))
+                
                     if j != len(x_trace) - 1:
+                        in_err = np.multiply(out_err, np.multiply(layer_out, 1 - layer_out))
                         weight_err = x_trace_r[j + 1].dot(in_err.T)
                         weight_errs.insert(0, weight_err)
                         bias_errs.insert(0, in_err)
+                    else:
+                        x, y = dataset.get_sample(i)
+                        weight_derivation = -(np.multiply(np.abs(neuron_type1_s),
+                         (neuron_type1_weights - x))) / (np.multiply(np.abs(neuron_type1_weights - x),
+                          np.square(np.abs(neuron_type1_s) + np.abs(neuron_type1_weights - x))))
+                        s_derivation = (np.multiply(neuron_type1_s,
+                         np.abs(neuron_type1_weights - x))) / (np.multiply(np.abs(neuron_type1_s),
+                          np.square(np.abs(neuron_type1_s) + np.abs(neuron_type1_weights - x))))
+                        in_err_w = np.multiply(out_err, weight_derivation)
+                        in_err_s = np.multiply(out_err, s_derivation)
+
+                        neuron_type1_weights_errs = np.multiply(in_err_w, x)
+                        neuron_type1_s_errs = np.multiply(in_err_s, x)
+
 
                 for j in range(len(x_trace) - 1):
-                    weights[j] -= lr * weight_errs[j]
-                    biases[j] -= lr * bias_errs[j].flatten()
+                    weights[j] = weights[j] - lr * weight_errs[j]
+                    biases[j] = biases[j] - lr * bias_errs[j].flatten()
+                
+                neuron_type1_weights = neuron_type1_weights - lr * neuron_type1_weights_errs
+                neuron_type1_s = neuron_type1_s - lr * neuron_type1_s_errs
 
             params = EvolutionalNeuralNet.encode_params(
                 weights, biases, neuron_type1_weights, neuron_type1_s)
@@ -165,8 +183,10 @@ class EvolutionalNeuralNet:
 class Individual:
 
     def __init__(self, value, dataset, layers):
-        self.value, self.fitness = EvolutionalNeuralNet.train(
-            value, ds, layers, n_iter=10, lr=1e-5)
+        """self.value, self.fitness = EvolutionalNeuralNet.train(
+            value, ds, layers, n_iter=50, lr=1e-5)"""
+        self.value = np.array(value)
+        self.fitness = EvolutionalNeuralNet.error(dataset, self.value, layers)
 
     def __eq__(self, other):
         return np.all(self.value == other.value)
@@ -355,7 +375,7 @@ def solution():
     return solution_func
 
 
-def plot_data(dataset, save_file=None, neuron_weights=None, model_specs=None):
+def plot_data(dataset, save_file=None, neuron_weights=None, params=None, model_specs=None):
     fig, axes = plt.subplots(1)
     fig.set_size_inches(20, 15)
     fig.suptitle('Vizualizacija podataka')
@@ -364,10 +384,21 @@ def plot_data(dataset, save_file=None, neuron_weights=None, model_specs=None):
             ", ".join([k + ": " + str(v) for k, v in model_specs.items()])))
     markers = [".", ",", "o"]
     colors = ['r', 'g', 'b']
-    for i in range(dataset.size()):
-        x, y = dataset.get_sample(i)
-        label = np.argmax(y)
-        axes.scatter(x[0], x[1], marker=markers[label], c=colors[label])
+    if params is None:
+        for i in range(dataset.size()):
+            x, y = dataset.get_sample(i)
+            label = np.argmax(y)
+            axes.scatter(x[0], x[1], marker=markers[label], c=colors[label])
+    
+    else:
+        preds = EvolutionalNeuralNet.predict(dataset.X, params)
+
+        for i in range(dataset.size()):
+            x = dataset.X[i]
+            if preds[i] == np.argmax(dataset.y[i]):
+                axes.scatter(x[0], x[1], marker=markers[2], c=colors[2])
+            else:
+                axes.scatter(x[0], x[1], marker=markers[0], c=colors[0])
 
     if neuron_weights is not None:
         for weight in neuron_weights:
@@ -400,9 +431,9 @@ def main():
     layers = [2, 8, 3]
     # test_neuron(2, [1, 0.25, 4], save_file='test_neuron.png')
     # plot_data(ds, save_file='data_visualisation.png')
-    population_size = 100
-    num_iter = 100000
-    no_elites = 5
+    population_size = 30
+    num_iter = 100
+    no_elites = 1
     mutation_chooser_probs = [70, 15, 15]
     mutation_prob = 0.1
     genetic_algorithm = GeneticAlgorithm(population_generation=generate_population(population_size, EvolutionalNeuralNet.get_no_params(layers)),
@@ -444,6 +475,17 @@ def main():
 if __name__ == "__main__":
     """ds = Dataset('dataset.txt')
     layers = [2, 8, 3]
-    Individual(np.random.rand(
-        EvolutionalNeuralNet.get_no_params(layers)) * 2 - 1, ds, layers)"""
+    best = Individual(np.random.rand(
+        EvolutionalNeuralNet.get_no_params(layers)) * 2 - 1, ds, layers)
+    _, _, neuron_type1_weights, _ = EvolutionalNeuralNet.decode_params(
+        best.value, layers)
+
+    plot_data(ds, neuron_weights=neuron_type1_weights)"""
     main()
+
+    """with open('best_individual_283_1.pickle', 'rb') as inp:
+        best = pickle.load(inp)
+
+    _, _, neuron_type1_weights, _ = EvolutionalNeuralNet.decode_params(best.value, layers)
+    plot_data(ds, save_file=None, neuron_weights=neuron_type1_weights, params=best.value, model_specs=None)
+    """
