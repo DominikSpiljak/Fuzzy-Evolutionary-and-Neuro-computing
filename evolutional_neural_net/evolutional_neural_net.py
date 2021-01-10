@@ -120,12 +120,10 @@ class EvolutionalNeuralNet:
 
     @staticmethod
     def train(params, dataset, layers, n_iter, lr):
-        # TODO: Finish updating neuron type 1 params
         for i in range(n_iter):
             if i % 100 == 0:
-                """print('Iteration {}, error {}'.format(
-                    i, EvolutionalNeuralNet.error(dataset, params, layers)))"""
-                pass
+                print('Iteration {}, error {}'.format(
+                    i, EvolutionalNeuralNet.error(dataset, params, layers)))
             preds, trace = EvolutionalNeuralNet.forward(
                 dataset.X, params, layers, trace=True)
 
@@ -227,12 +225,24 @@ def roulette_selection(elitism=True, no_elites=1):
             no_combs = len(population)
 
         fitnesses = np.array([ind.fitness for ind in population])
-        probs = fitnesses / sum(fitnesses)
+        probs = (1 / fitnesses) / sum(1 / fitnesses)
 
         comb_population = np.random.choice(
             population, p=probs, size=(no_combs, 2))
 
         return new_population, comb_population
+
+    return selection
+
+
+def tournament_selection(k=3):
+    def selection(population):
+        selected = np.random.choice(population, k, replace=False)
+        selected_sorted = sorted(selected, key=lambda x: x.fitness)
+        comb_population = [[selected_sorted[0], selected_sorted[1]]]
+        population.remove(selected_sorted[-1])
+
+        return population, comb_population
 
     return selection
 
@@ -431,11 +441,11 @@ def main():
     layers = [2, 8, 3]
     # test_neuron(2, [1, 0.25, 4], save_file='test_neuron.png')
     # plot_data(ds, save_file='data_visualisation.png')
-    population_size = 30
-    num_iter = 100
-    no_elites = 1
-    mutation_chooser_probs = [70, 15, 15]
-    mutation_prob = 0.1
+    population_size = 100
+    num_iter = 100000
+    no_elites = 20
+    mutation_chooser_probs = [3, 1, 2]
+    mutation_prob = 0.15
     genetic_algorithm = GeneticAlgorithm(population_generation=generate_population(population_size, EvolutionalNeuralNet.get_no_params(layers)),
                                          num_iter=num_iter,
                                          selection=roulette_selection(
@@ -444,8 +454,8 @@ def main():
                                          [weights_recombination_cross(), neurons_recombination_cross(), simulated_binary_cross()]),
                                          mutation=mutation_chooser([mutation_1(mutation_prob, 0.3),
                                                                     mutation_1(
-                                                                        mutation_prob, 1),
-                                                                    mutation_2(mutation_prob, 0.3)],
+                                                                        mutation_prob, 0.5),
+                                                                    mutation_2(mutation_prob, 0.5)],
                                                                    probs=mutation_chooser_probs),
                                          solution=solution(),
                                          goal_fitness=1e-7)
@@ -473,19 +483,5 @@ def main():
 
 
 if __name__ == "__main__":
-    """ds = Dataset('dataset.txt')
-    layers = [2, 8, 3]
-    best = Individual(np.random.rand(
-        EvolutionalNeuralNet.get_no_params(layers)) * 2 - 1, ds, layers)
-    _, _, neuron_type1_weights, _ = EvolutionalNeuralNet.decode_params(
-        best.value, layers)
-
-    plot_data(ds, neuron_weights=neuron_type1_weights)"""
     main()
 
-    """with open('best_individual_283_1.pickle', 'rb') as inp:
-        best = pickle.load(inp)
-
-    _, _, neuron_type1_weights, _ = EvolutionalNeuralNet.decode_params(best.value, layers)
-    plot_data(ds, save_file=None, neuron_weights=neuron_type1_weights, params=best.value, model_specs=None)
-    """
