@@ -438,21 +438,20 @@ def test_neuron(w, s, save_file=None):
 def main():
     global ds, layers
     ds = Dataset('dataset.txt')
-    layers = [2, 8, 3]
+    layers = [2, 8, 4, 3]
     # test_neuron(2, [1, 0.25, 4], save_file='test_neuron.png')
     # plot_data(ds, save_file='data_visualisation.png')
     population_size = 100
-    num_iter = 100000
-    no_elites = 20
+    num_iter = 8000000
+    k = 3
     mutation_chooser_probs = [3, 1, 2]
-    mutation_prob = 0.15
+    mutation_prob = 0.1
     genetic_algorithm = GeneticAlgorithm(population_generation=generate_population(population_size, EvolutionalNeuralNet.get_no_params(layers)),
                                          num_iter=num_iter,
-                                         selection=roulette_selection(
-                                         elitism=True, no_elites=no_elites),
+                                         selection=tournament_selection(k=k),
                                          combination=cross_chooser(
                                          [weights_recombination_cross(), neurons_recombination_cross(), simulated_binary_cross()]),
-                                         mutation=mutation_chooser([mutation_1(mutation_prob, 0.3),
+                                         mutation=mutation_chooser([mutation_1(mutation_prob, 0.1),
                                                                     mutation_1(
                                                                         mutation_prob, 0.5),
                                                                     mutation_2(mutation_prob, 0.5)],
@@ -473,11 +472,12 @@ def main():
     plot_data(ds, neuron_weights=neuron_type1_weights, model_specs={
         "pop_size": population_size,
         "num_iter": num_iter,
-        "no_elites": no_elites,
+        "k": 3,
         "mutation_chooser_probs": ', '.join([str(prob) for prob in mutation_chooser_probs]),
         "mutation_prob": mutation_prob,
         "layers": ', '.join([str(layer) for layer in layers])
-    },
+        },
+        params=best.value,
         save_file="data_visualisation_with_neuron_weights_{}_2.png".format(
         ''.join([str(layer) for layer in layers])))
 
