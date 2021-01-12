@@ -1,11 +1,15 @@
 import numpy as np
 import pickle
+from copy import deepcopy
 
 class Individual:
 
     def __init__(self, value, neural_net):
-        self.value = np.array(value)
+        self.value = np.array(value.copy())
         self.error = neural_net.calculate_error(self.value)
+
+    def get_value(self):
+        return self.value.copy()
 
     def __eq__(self, other):
         return np.all(self.value == other.value)

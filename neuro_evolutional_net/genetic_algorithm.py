@@ -1,5 +1,5 @@
 from tqdm import tqdm
-
+from individual import Individual
 
 class GeneticAlgorithm:
 
@@ -12,14 +12,16 @@ class GeneticAlgorithm:
         self.solution = solution
         self.goal_error = goal_error
 
-    def evolution(self):
+    def evolution(self, neural_net):
         # Template method
         population = self.population_generation()
         min_error = self.solution(population).error
 
         for i in tqdm(range(self.num_iter)):
             population, comb_population = self.selection(population)
-            population.extend(self.mutation(self.combination(comb_population)))
+            combined_population = self.combination(comb_population)
+            mutated_population = self.mutation(combined_population)
+            population.extend(mutated_population)
 
             iteration_min_error = self.solution(population).error
 
@@ -29,6 +31,6 @@ class GeneticAlgorithm:
                     i, self.solution(population)))
                 if iteration_min_error < self.goal_error:
                     print("Reached goal error, terminating.")
-                    return self.solution(population)
-
+                    break
+        
         return self.solution(population)

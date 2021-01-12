@@ -59,12 +59,12 @@ def test_neuron(w, s, save_file=None):
 
 def main():
     dataset = Dataset('dataset.txt')
-    layers = [2, 8, 4, 3]
+    layers = [2, 8, 3]
     neural_net = NeuralNet(layers, dataset)
-    # test_neuron(2, [1, 0.25, 4], save_file='test_neuron.png')
-    # plot_data(dataset, save_file='data_visualisation.png')
+    test_neuron(2, [1, 0.25, 4], save_file='test_neuron.png')
+    plot_data(dataset, save_file='data_visualisation.png')
     population_size = 100
-    num_iter = 7700000
+    num_iter = 500000
     k = 5
     mutation_chooser_probs = [5, 1, 3]
     mutation_prob = 0.1
@@ -78,28 +78,30 @@ def main():
                                          mutation=genetics.mutation_chooser([genetics.mutation_1(mutation_prob, 0.1),
                                                                     genetics.mutation_1(mutation_prob, 0.6),
                                                                     genetics.mutation_2(mutation_prob, 0.6)],
-                                                                   probs=mutation_chooser_probs),
+                                                                   probs=mutation_chooser_probs, neural_net=neural_net),
                                          solution=genetics.solution(),
                                          goal_error=1e-7)
 
     start_time = time.time()
-    best = genetic_algorithm.evolution()
+    best = genetic_algorithm.evolution(neural_net)
     print("--- {} seconds ---".format(time.time() - start_time))
 
-    best.save_individual("best_individual_{}_2.pickle".format(
+    best.save_individual("best_individual_{}.pickle".format(
         ''.join([str(layer) for layer in layers])))
+
+    print(neural_net.calculate_error(best.value))
 
 
     plot_data(dataset, neural_net=neural_net, model_specs={
         "pop_size": population_size,
         "num_iter": num_iter,
-        "k": 3,
+        "k": k,
         "mutation_chooser_probs": ', '.join([str(prob) for prob in mutation_chooser_probs]),
         "mutation_prob": mutation_prob,
         "layers": ', '.join([str(layer) for layer in layers])
         },
         params=best.value,
-        save_file="data_visualisation_with_neuron_weights_{}_2.png".format(
+        save_file="data_visualisation_with_neuron_weights_{}.png".format(
         ''.join([str(layer) for layer in layers])))
 
 
@@ -112,8 +114,5 @@ if __name__ == "__main__":
     with open('best_individual_283.pickle', 'rb') as inp:
         best = pickle.load(inp)
 
-    print('Preds: ')
-    print(neural_net.forward(best.value, dataset.X))
-
-    print('y: ')
-    print(np.argmax(dataset.y, axis=1))"""
+    print('Error: ')
+    print(neural_net.calculate_error(best.value))"""

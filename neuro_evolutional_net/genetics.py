@@ -13,7 +13,7 @@ def tournament_selection(k=3):
         selected = np.random.choice(population, size=k, replace=False)
         selected_sorted = sorted(selected, key=lambda x: x.error)
         comb_population.append([selected_sorted[0], selected_sorted[1]])
-        population.remove(selected_sorted[-1])
+        population.remove(selected_sorted[k-1])
         return population, comb_population
     
     return selector
@@ -26,7 +26,7 @@ def weight_recombination(neural_net):
             child_vals = []
             rand= (np.random.rand(neural_net.get_num_params()) >= 0.5).astype('int')
             for i in range(neural_net.get_num_params()):
-                child_vals.append(parents[rand[i]].value[i])
+                child_vals.append(parents[rand[i]].get_value()[i])
             children.append(Individual(child_vals, neural_net))
         return children
     return recombinator
@@ -37,7 +37,7 @@ def simulated_binary_recombination(neural_net):
         children = []
         for parents in comb_population:
             rand = np.random.rand(neural_net.get_num_params())
-            child_vals = (1 - rand) * parents[0].value + rand * parents[1].value
+            child_vals = (1 - rand) * parents[0].get_value() + rand * parents[1].get_value()
             children.append(Individual(child_vals, neural_net))
         return children
     return recombinator
@@ -47,7 +47,7 @@ def whole_arithmetic_recombination(neural_net):
     def recombinator(comb_population):
         children = []
         for parents in comb_population:
-            child_vals = (parents[0].value + parents[1].value) / 2
+            child_vals = (parents[0].get_value() + parents[1].get_value()) / 2
             children.append(Individual(child_vals, neural_net))
         return children
     return recombinator
@@ -63,8 +63,8 @@ def cross_chooser(cross_list):
 def mutation_1(mutation_prob, deviation):
     def mutator(children):
         for child in children:
-            rand = np.random.rand(len(child.value))
-            for i in range(len(child.value)):
+            rand = np.random.rand(len(child.get_value()))
+            for i in range(len(child.get_value())):
                 if rand[i] < mutation_prob:
                     child.value[i] += np.random.normal(0, scale=deviation)
         return children
@@ -73,20 +73,24 @@ def mutation_1(mutation_prob, deviation):
 def mutation_2(mutation_prob, deviation):
     def mutator(children):
         for child in children:
-            rand = np.random.rand(len(child.value))
-            for i in range(len(child.value)):
+            rand = np.random.rand(len(child.get_value()))
+            for i in range(len(child.get_value())):
                 if rand[i] < mutation_prob:
                     child.value[i] = np.random.normal(0, scale=deviation)
         return children
     return mutator
 
-def mutation_chooser(mutation_list, probs):
+def mutation_chooser(mutation_list, probs, neural_net):
     probs = np.array(probs)
     probs = probs / np.sum(probs)
 
     def mutation_func(children):
         mutation = np.random.choice(mutation_list, p=probs)
-        return mutation(children)
+        mutated = mutation(children)
+        for c in mutated:
+            c.error = neural_net.calculate_error(c.value)
+        
+        return mutated
 
     return mutation_func
 
