@@ -106,13 +106,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    """import pickle
+    #main()
+    import pickle
     dataset = Dataset('dataset.txt')
     layers = [2, 8, 3]
     neural_net = NeuralNet(layers, dataset)
     with open('best_individual_283.pickle', 'rb') as inp:
         best = pickle.load(inp)
 
-    print('Error: ')
-    print(neural_net.calculate_error(best.value))"""
+    neural_net.show(best.value)
