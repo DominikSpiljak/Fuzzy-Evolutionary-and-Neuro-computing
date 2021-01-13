@@ -114,4 +114,10 @@ if __name__ == "__main__":
     with open('best_individual_283.pickle', 'rb') as inp:
         best = pickle.load(inp)
 
-    neural_net.show(best.value)
+    #neural_net.show(best.value, save_file='neural_net_283.png')
+
+    w_type_1, s_type_1, w, b = neural_net.decode_params(best.value)
+    print(w_type_1)
+    print(s_type_1),
+    print(w)
+    print(b.reshape(b.shape[0], 1))

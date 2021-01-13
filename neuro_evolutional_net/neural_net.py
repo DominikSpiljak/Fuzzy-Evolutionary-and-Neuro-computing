@@ -53,6 +53,29 @@ class NeuralNet:
     def predict(self, params, X):
         return np.argmax(self.forward(params, X), axis=1)
 
+    def decode_params(self, params):
+        w_type_1 = []
+        s_type_1 = []
+
+        last_idx = 0
+
+        for i, layer in enumerate(self.layers):
+            if i == 0:
+                continue
+            if i == 1:
+                for _ in range(layer):
+                    w_type_1.append(params[last_idx: last_idx + 2])
+                    s_type_1.append(params[last_idx + 2: last_idx + 4])
+                    last_idx = last_idx + 4
+            else:
+                w = np.array(params[last_idx:last_idx + self.layers[i - 1] * self.layers[i]]).reshape(self.layers[i - 1], self.layers[i])
+                last_idx = last_idx + self.layers[i - 1] * self.layers[i]
+                b = np.array(params[last_idx:last_idx + self.layers[i]])
+                last_idx = last_idx + self.layers[i]
+
+        return np.array(w_type_1), np.array(s_type_1), np.array(w), np.array(b)
+
+
     def show(self, params, save_file=None):
         
         # TODO: implement weights drawing
@@ -65,6 +88,7 @@ class NeuralNet:
         layer_sizes = self.layers
         v_spacing = (top - bottom)/float(max(layer_sizes))
         h_spacing = (right - left)/float(len(layer_sizes) - 1)
+
         # Nodes
         for n, layer_size in enumerate(layer_sizes):
             layer_top = v_spacing*(layer_size - 1)/2. + (top + bottom)/2.
@@ -83,6 +107,7 @@ class NeuralNet:
                     ax.add_artist(line)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
+        ax.axis('off')
         if save_file is not None:
             plt.savefig(save_file)
 
