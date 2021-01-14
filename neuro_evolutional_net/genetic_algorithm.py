@@ -1,5 +1,5 @@
-from tqdm import tqdm
 from individual import Individual
+
 
 class GeneticAlgorithm:
 
@@ -17,7 +17,7 @@ class GeneticAlgorithm:
         population = self.population_generation()
         min_error = self.solution(population).error
 
-        for i in tqdm(range(self.num_iter)):
+        for i in range(self.num_iter):
             population, comb_population = self.selection(population)
             combined_population = self.combination(comb_population)
             mutated_population = self.mutation(combined_population)
@@ -32,5 +32,5 @@ class GeneticAlgorithm:
                 if iteration_min_error < self.goal_error:
                     print("Reached goal error, terminating.")
                     break
-        
+
         return self.solution(population)

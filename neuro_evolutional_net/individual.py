@@ -2,11 +2,15 @@ import numpy as np
 import pickle
 from copy import deepcopy
 
+
 class Individual:
 
     def __init__(self, value, neural_net):
         self.value = np.array(value.copy())
-        self.error = neural_net.calculate_error(self.value)
+        self.w_type_1, self.s_type_1, self.w, self.b = neural_net.decode_params(
+            self.value)
+        self.error = neural_net.calculate_error(
+            [self.w_type_1, self.s_type_1, self.w, self.b])
 
     def get_value(self):
         return self.value.copy()
