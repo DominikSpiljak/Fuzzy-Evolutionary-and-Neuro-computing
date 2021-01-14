@@ -106,18 +106,18 @@ def main():
 
 
 if __name__ == "__main__":
-    #main()
-    import pickle
+    main()
+    """import pickle
     dataset = Dataset('dataset.txt')
     layers = [2, 8, 3]
     neural_net = NeuralNet(layers, dataset)
     with open('best_individual_283.pickle', 'rb') as inp:
         best = pickle.load(inp)
 
-    #neural_net.show(best.value, save_file='neural_net_283.png')
+    neural_net.show(best.value, save_file='neural_net_283.png')
 
-    w_type_1, s_type_1, w, b = neural_net.decode_params(best.value)
+    w_type_1, s_type_1, w ,b = neural_net.decode_params(best.value)
     print(w_type_1)
     print(s_type_1),
     print(w)
-    print(b.reshape(b.shape[0], 1))
+    print(b.reshape(b.size, 1))"""
