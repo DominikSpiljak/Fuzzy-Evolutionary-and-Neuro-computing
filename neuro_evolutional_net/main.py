@@ -67,7 +67,7 @@ def main():
     population_size = 100
     num_iter = 1000000
     k = 3
-    mutation_chooser_probs = [10, 5, 5]
+    mutation_chooser_probs = [20, 5, 5]
     mutation_prob = 0.1
     genetic_algorithm = GeneticAlgorithm(population_generation=genetics.generate_population(neural_net.get_num_params(), population_size, neural_net),
                                          num_iter=num_iter,
@@ -78,9 +78,9 @@ def main():
          genetics.simulated_binary_recombination(
             neural_net),
          genetics.whole_arithmetic_recombination(neural_net)]),
-        mutation=genetics.mutation_chooser([genetics.mutation_1(mutation_prob, 0.1),
+        mutation=genetics.mutation_chooser([genetics.mutation_1(mutation_prob, 0.01),
                                             genetics.mutation_1(
-                                                mutation_prob, 1),
+                                                mutation_prob, 0.3),
                                             genetics.mutation_2(mutation_prob, 1)],
                                            probs=mutation_chooser_probs, neural_net=neural_net),
         solution=genetics.solution(),
