@@ -24,13 +24,13 @@ class GeneticAlgorithm:
             population.extend(mutated_population)
 
             iteration_min_error = self.solution(population).error
-
-            if iteration_min_error < min_error:
-                min_error = iteration_min_error
-                print("Found new best, iteration = {}, {}".format(
-                    i, self.solution(population)))
-                if iteration_min_error < self.goal_error:
-                    print("Reached goal error, terminating.")
-                    break
+            if i % 1000 == 0:
+                if iteration_min_error < min_error:
+                    min_error = iteration_min_error
+                    print("Found new best, iteration = {}, {}".format(
+                        i, self.solution(population)))
+                    if iteration_min_error < self.goal_error:
+                        print("Reached goal error, terminating.")
+                        break
 
         return self.solution(population)

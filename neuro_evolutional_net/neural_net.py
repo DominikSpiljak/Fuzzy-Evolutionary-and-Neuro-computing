@@ -31,10 +31,8 @@ class NeuralNet:
             if i == 0:
                 continue
             elif i == 1:
-                for j in range(layer):
-                    layer_outputs.append(
-                        1 / (1 + np.sqrt(np.sum(np.square((X - w_type_1[j].flatten()) / s_type_1[j].flatten()), axis=1))))
-                layer_outputs = np.array(layer_outputs).T
+                layer_outputs = np.array(
+                    [1 / (1 + np.sqrt(np.sum(np.square((X - w_type_1[j]) / s_type_1[j]), axis=1))) for j in range(layer)]).T
 
             else:
                 weights = w[i - 2]

@@ -8,10 +8,13 @@ def generate_population(no_params, population_size, neural_net):
     return generator
 
 
-def tournament_selection(k=3):
+def tournament_selection(population_size, k=3):
+
     def selector(population):
         comb_population = []
-        selected = np.random.choice(population, size=k, replace=False)
+        selected = []
+        for _ in range(k):
+            selected.append(population[np.random.randint(0, population_size)])
         selected_sorted = sorted(selected, key=lambda x: x.error)
         comb_population.append([selected_sorted[0], selected_sorted[1]])
         population.remove(selected_sorted[k-1])
