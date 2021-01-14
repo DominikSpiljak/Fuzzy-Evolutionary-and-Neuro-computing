@@ -66,11 +66,11 @@ def main():
         neural_net = NeuralNet(layers, dataset)
         #test_neuron(2, [1, 0.25, 4], save_file='test_neuron.png')
         #plot_data(dataset, save_file='data_visualisation.png')
-        population_size = 75
-        num_iter = 5000000
-        k = 3
-        mutation_chooser_probs = [20, 7, 7]
-        mutation_prob = 0.1
+        population_size = 150
+        num_iter = 10000000
+        k = 5
+        mutation_chooser_probs = [10, 2, 3]
+        mutation_prob = 0.2
         genetic_algorithm = GeneticAlgorithm(population_generation=genetics.generate_population(neural_net.get_num_params(), population_size, neural_net),
                                              num_iter=num_iter,
                                              selection=genetics.tournament_selection(
@@ -80,10 +80,10 @@ def main():
              genetics.simulated_binary_recombination(
                 neural_net),
              genetics.whole_arithmetic_recombination(neural_net)]),
-            mutation=genetics.mutation_chooser([genetics.mutation_1(mutation_prob, 0.1),
+            mutation=genetics.mutation_chooser([genetics.mutation_1(mutation_prob, 0.05),
                                                 genetics.mutation_1(
-                mutation_prob, 0.4),
-                genetics.mutation_2(mutation_prob, 1)],
+                mutation_prob, 0.2),
+                genetics.mutation_2(mutation_prob, 0.33)],
             probs=mutation_chooser_probs, neural_net=neural_net),
             solution=genetics.solution(),
             goal_error=1e-7)
@@ -92,7 +92,7 @@ def main():
         best = genetic_algorithm.evolution(neural_net)
         print("--- {} seconds ---".format(time.time() - start_time))
 
-        best.save_individual("best_individual_{}.pickle".format(
+        best.save_individual("best_individual_{}_1.pickle".format(
             ''.join([str(layer) for layer in layers])))
 
         print(neural_net.calculate_error(
@@ -107,7 +107,7 @@ def main():
             "layers": ', '.join([str(layer) for layer in layers])
         },
             params=best.value,
-            save_file="data_visualisation_with_neuron_weights_{}.png".format(
+            save_file="data_visualisation_with_neuron_weights_{}_1.png".format(
             ''.join([str(layer) for layer in layers])))
 
 

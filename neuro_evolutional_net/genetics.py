@@ -4,7 +4,7 @@ from individual import Individual
 
 def generate_population(no_params, population_size, neural_net):
     def generator():
-        return [Individual(np.random.rand(no_params), neural_net) for _ in range(population_size)]
+        return [Individual(np.random.rand(no_params) * 2 - 1, neural_net) for _ in range(population_size)]
     return generator
 
 
