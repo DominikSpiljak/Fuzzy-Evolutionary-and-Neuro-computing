@@ -4,7 +4,12 @@ from individual import Individual
 
 def generate_population(no_params, population_size, neural_net):
     def generator():
-        return [Individual(np.random.rand(no_params) * 2 - 1, neural_net) for _ in range(population_size)]
+        population = [Individual(np.random.rand(
+            no_params) * 2 - 1, neural_net) for _ in range(population_size)]
+        for p in population:
+            p.calculate_error()
+
+        return population
     return generator
 
 
@@ -106,8 +111,7 @@ def mutation_chooser(mutation_list, probs, neural_net):
         mutation = np.random.choice(mutation_list, p=probs)
         mutated = mutation(children)
         for c in mutated:
-            c.error = neural_net.calculate_error(
-                [c.w_type_1, c.s_type_1, c.w, c.b])
+            c.calculate_error()
 
         return mutated
 

@@ -7,9 +7,12 @@ class Individual:
 
     def __init__(self, value, neural_net):
         self.value = np.array(value.copy())
-        self.w_type_1, self.s_type_1, self.w, self.b = neural_net.decode_params(
+        self.neural_net = neural_net
+
+    def calculate_error(self):
+        self.w_type_1, self.s_type_1, self.w, self.b = self.neural_net.decode_params(
             self.value)
-        self.error = neural_net.calculate_error(
+        self.error = self.neural_net.calculate_error(
             [self.w_type_1, self.s_type_1, self.w, self.b])
 
     def get_value(self):
