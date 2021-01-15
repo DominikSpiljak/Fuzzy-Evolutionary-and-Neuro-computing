@@ -111,8 +111,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    """import pickle
+    # main()
+    import pickle
     dataset = Dataset('dataset.txt')
     layers = [2, 8, 3]
     neural_net = NeuralNet(layers, dataset)
@@ -122,4 +122,5 @@ if __name__ == "__main__":
     # neural_net.show(best.value, save_file='neural_net_283.png')
 
     w_type_1, s_type_1, w, b = neural_net.decode_params(best.value)
-    """
+
+    print(s_type_1)
